@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/utils/db";
 import Alumni from "@/models/Alumni";
+import type { NextRequest } from "next/server";
 
 connectDB();
 
-export async function GET(req: Request, { params }: { params: { regNo: string } }) {
+export async function GET(req: NextRequest, { params }: { params: { regNo: string } }) {
   try {
-    const { regNo } = params;
+    const regNo = params.regNo; 
 
     if (!regNo) {
       return NextResponse.json({ message: "Register number is required" }, { status: 400 });
@@ -20,6 +21,7 @@ export async function GET(req: Request, { params }: { params: { regNo: string } 
 
     return NextResponse.json(alumni, { status: 200 });
   } catch (error) {
-    return NextResponse.json({ message: "Error fetching alumni", error }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json({ message: "Error fetching alumni", error: errorMessage }, { status: 500 });
   }
 }
