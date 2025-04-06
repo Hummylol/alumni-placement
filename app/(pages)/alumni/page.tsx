@@ -1,154 +1,288 @@
 "use client";
+
 import { useState } from "react";
-import FormInput from "@/components/FormInput";
-import Button from "@/components/Button";
+import { CldUploadButton } from "next-cloudinary";
 
-const AlumniPage = () => {
-  const [viewMode, setViewMode] = useState<"add" | "view" | null>(null);
+const ugOptions = ["CSE", "IT", "BME", "ECE", "CS", "AIDS", "AIML", "CSBS"];
+const pgOptions = ["MBA", "MCA", "CE", "CEM", "PED", "AE", "SE"];
 
-  // Form state for adding alumni
+export default function AlumniPage() {
+  const [mode, setMode] = useState<"add" | "view">("add");
+  const [regNoSearch, setRegNoSearch] = useState("");
+  const [alumniData, setAlumniData] = useState<any>(null);
+  const [error, setError] = useState("");
   const [formData, setFormData] = useState({
     regNo: "",
     alumniName: "",
-    yearOfPassing: "",
-    currentPosition: "",
-    companyName: "",
-    contact: "",
+    ug: "",
+    pg: "",
+    batchFrom: "",
+    batchTo: "",
     alumniEmail: "",
+    contact: "",
+    address: "",
+    occupation: "",
+    organisation: "",
+    jobLocation: "",
+    webpage: "",
+    linkedin: "",
+    facebook: "",
+    twitter: "",
+    youtube: "",
+    otherSocial: "",
+    interactWithJuniors: false,
+    attendMeet: false,
+    contributeScheme: false,
+    imageUrl: "",
   });
-  const [loading, setLoading] = useState(false);
 
-  // State for viewing alumni
-  const [searchRegNo, setSearchRegNo] = useState("");
-  const [alumniData, setAlumniData] = useState<any>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [searchLoading, setSearchLoading] = useState(false);
-
-  // Handle form input changes
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.id]: e.target.value });
+  const handleChange = (e: any) => {
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
   };
 
-  // Handle adding alumni
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleRadioChange = (e: any) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value === "yes",
+    }));
+  };
+
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
-    setLoading(true);
 
-    try {
-      const response = await fetch("/api/alumni", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await response.json();
-      if (response.ok) {
-        alert("Alumni details added successfully!");
-        setFormData({
-          regNo: "",
-          alumniName: "",
-          yearOfPassing: "",
-          currentPosition: "",
-          companyName: "",
-          contact: "",
-          alumniEmail: "",
-        });
-      } else {
-        alert(`Error: ${data.message}`);
-      }
-    } catch (error) {
-      alert("Something went wrong!");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Handle search input change
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchRegNo(e.target.value);
-  };
-
-  // Fetch alumni details
-  const fetchAlumniDetails = async () => {
-    if (!searchRegNo.trim()) {
-      setError("Please enter a register number.");
+    if (!formData.imageUrl) {
+      alert("Please upload an image first.");
       return;
     }
 
-    setSearchLoading(true);
-    setError(null);
-    setAlumniData(null);
+    const res = await fetch("/api/alumni", {
+      method: "POST",
+      body: JSON.stringify(formData),
+      headers: { "Content-Type": "application/json" },
+    });
 
+    const data = await res.json();
+    alert(data.message);
+  };
+
+  const handleSearch = async () => {
     try {
-      const response = await fetch(`/api/alumni/${searchRegNo}`);
-      const data = await response.json();
-
-      if (response.ok) {
-        setAlumniData(data);
-      } else {
-        setError(data.message || "Alumni not found.");
-      }
-    } catch (err) {
-      setError("Failed to fetch data. Please try again.");
-    } finally {
-      setSearchLoading(false);
+      const res = await fetch(`/api/alumni/${regNoSearch}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+      setAlumniData(data);
+      setError("");
+    } catch (err: any) {
+      setAlumniData(null);
+      setError(err.message);
     }
   };
 
   return (
-    <div className="max-w-lg mx-auto mt-10 bg-white p-6 rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold text-gray-800 mb-4">Alumni Details</h2>
-
-      <div className="flex gap-4">
-        <Button text="Add Alumni" onClick={() => setViewMode("add")} />
-        <Button text="View Alumni" onClick={() => setViewMode("view")} />
+    <>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Alumni Portal</h1>
+        <a
+          href="/alumnidata"
+          className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition"
+        >
+          View All Alumni
+        </a>
       </div>
-
-      {/* Add Alumni Section */}
-      {viewMode === "add" && (
-        <form className="mt-4 flex flex-col gap-4" onSubmit={handleSubmit}>
-          <FormInput label="Register Number" id="regNo" value={formData.regNo} onChange={handleChange} />
-          <FormInput label="Alumni Name" id="alumniName" value={formData.alumniName} onChange={handleChange} />
-          <FormInput label="Year of Passing" id="yearOfPassing" type="number" value={formData.yearOfPassing} onChange={handleChange} />
-          <FormInput label="Current Position" id="currentPosition" value={formData.currentPosition} onChange={handleChange} />
-          <FormInput label="Company Name" id="companyName" value={formData.companyName} onChange={handleChange} />
-          <FormInput label="Contact" id="contact" value={formData.contact} onChange={handleChange} />
-          <FormInput label="Email" id="alumniEmail" type="email" value={formData.alumniEmail} onChange={handleChange} />
-          <Button text={loading ? "Submitting..." : "Submit"} type="submit" disabled={loading} />
-        </form>
-      )}
-
-      {/* View Alumni Section */}
-      {viewMode === "view" && (
-        <div className="mt-4 flex flex-col gap-4">
-          <FormInput
-            label="Enter Register Number"
-            id="searchRegNo"
-            value={searchRegNo}
-            onChange={handleSearchChange}
-          />
-          <Button text={searchLoading ? "Searching..." : "Search"} onClick={fetchAlumniDetails} disabled={searchLoading} />
-
-          {/* Error Message */}
-          {error && <p className="text-red-600 text-sm">{error}</p>}
-
-          {/* Alumni Details */}
-          {alumniData && (
-            <div className="border border-gray-300 p-4 rounded-lg bg-gray-50 mt-4">
-              <h3 className="text-lg font-semibold text-gray-800">Alumni Details</h3>
-              <p><strong>Reg No:</strong> {alumniData.regNo}</p>
-              <p><strong>Name:</strong> {alumniData.alumniName}</p>
-              <p><strong>Year of Passing:</strong> {alumniData.yearOfPassing}</p>
-              <p><strong>Current Position:</strong> {alumniData.currentPosition}</p>
-              <p><strong>Company:</strong> {alumniData.companyName}</p>
-              <p><strong>Contact:</strong> {alumniData.contact}</p>
-              <p><strong>Email:</strong> {alumniData.alumniEmail}</p>
-            </div>
-          )}
+      <div className="max-w-5xl mx-auto p-8 space-y-6">
+        <div className="flex justify-center gap-6">
+          <button
+            onClick={() => setMode("add")}
+            className={`px-5 py-2 rounded font-semibold shadow ${mode === "add" ? "bg-blue-600 text-white" : "bg-gray-200"}`}
+          >
+            Add Alumni
+          </button>
+          <button
+            onClick={() => setMode("view")}
+            className={`px-5 py-2 rounded font-semibold shadow ${mode === "view" ? "bg-blue-600 text-white" : "bg-gray-200"}`}
+          >
+            View Alumni
+          </button>
         </div>
-      )}
-    </div>
-  );
-};
 
-export default AlumniPage;
+        {mode === "add" ? (
+          <form onSubmit={handleSubmit} className="space-y-8 bg-white p-6 rounded-lg shadow-lg">
+            {/* Image upload */}
+            <div>
+              <label className="block font-semibold mb-2">Upload Photo</label>
+              <CldUploadButton
+                uploadPreset="alumni_uploads"
+                onSuccess={(result: any) => {
+                  const url = result?.info?.secure_url;
+                  if (url) setFormData((prev) => ({ ...prev, imageUrl: url }));
+                }}
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              >
+                Upload
+              </CldUploadButton>
+
+              {formData.imageUrl && (
+                <div className="mt-4">
+                  <img src={formData.imageUrl} alt="Preview" className="w-32 h-32 object-cover rounded border" />
+                </div>
+              )}
+            </div>
+
+            {/* Personal Info */}
+            <div>
+              <h3 className="text-lg font-bold mb-4">Personal Info</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {["regNo", "alumniName", "batchFrom", "batchTo", "alumniEmail", "contact", "address"].map((field) => (
+                  <div key={field}>
+                    <label className="block mb-1 font-medium capitalize">{field.replace(/([A-Z])/g, " $1")}</label>
+                    <input
+                      name={field}
+                      value={(formData as any)[field]}
+                      onChange={handleChange}
+                      className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Education & Work */}
+            <div>
+              <h3 className="text-lg font-bold mb-4">Education & Work</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block mb-1 font-medium">UG Department</label>
+                  <select name="ug" value={formData.ug} onChange={handleChange} className="w-full p-2 border rounded">
+                    <option value="">Select UG</option>
+                    {ugOptions.map((opt) => (
+                      <option key={opt}>{opt}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block mb-1 font-medium">PG Department</label>
+                  <select name="pg" value={formData.pg} onChange={handleChange} className="w-full p-2 border rounded">
+                    <option value="">Select PG</option>
+                    {pgOptions.map((opt) => (
+                      <option key={opt}>{opt}</option>
+                    ))}
+                  </select>
+                </div>
+                {["occupation", "organisation", "jobLocation"].map((field) => (
+                  <div key={field}>
+                    <label className="block mb-1 font-medium capitalize">{field.replace(/([A-Z])/g, " $1")}</label>
+                    <input
+                      name={field}
+                      value={(formData as any)[field]}
+                      onChange={handleChange}
+                      className="w-full p-2 border rounded"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Socials */}
+            <div>
+              <h3 className="text-lg font-bold mb-4">Social Media</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {["webpage", "linkedin", "facebook", "twitter", "youtube", "otherSocial"].map((field) => (
+                  <div key={field}>
+                    <label className="block mb-1 font-medium capitalize">{field}</label>
+                    <input
+                      name={field}
+                      value={(formData as any)[field]}
+                      onChange={handleChange}
+                      className="w-full p-2 border rounded"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Preferences */}
+            <div>
+              <h3 className="text-lg font-bold mb-4">Preferences</h3>
+              <div className="space-y-4">
+                {[
+                  { name: "interactWithJuniors", label: "Willing to interact with juniors?" },
+                  { name: "attendMeet", label: "Willing to attend meets?" },
+                  { name: "contributeScheme", label: "Willing to contribute to schemes?" },
+                ].map(({ name, label }) => (
+                  <div key={name} className="flex items-center gap-6">
+                    <span className="w-64 font-medium">{label}</span>
+                    <label>
+                      <input
+                        type="radio"
+                        name={name}
+                        value="yes"
+                        checked={(formData as any)[name] === true}
+                        onChange={handleRadioChange}
+                        className="mr-1"
+                      />
+                      Yes
+                    </label>
+                    <label>
+                      <input
+                        type="radio"
+                        name={name}
+                        value="no"
+                        checked={(formData as any)[name] === false}
+                        onChange={handleRadioChange}
+                        className="mr-1"
+                      />
+                      No
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <button type="submit" className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded text-lg shadow">
+              Submit
+            </button>
+          </form>
+        ) : (
+          <div className="bg-white p-6 rounded-lg shadow-lg space-y-4">
+            <input
+              value={regNoSearch}
+              onChange={(e) => setRegNoSearch(e.target.value)}
+              placeholder="Enter Register Number"
+              className="border px-4 py-2 rounded w-full"
+            />
+            <button onClick={handleSearch} className="bg-blue-600 text-white px-4 py-2 rounded">
+              Search
+            </button>
+
+            {error && <p className="text-red-600">{error}</p>}
+
+            {alumniData && (
+              <div className="space-y-2">
+                {alumniData.imageUrl && (
+                  <div className="text-center">
+                    <img src={alumniData.imageUrl} alt="Alumni" className="w-40 h-40 object-cover rounded mx-auto" />
+                  </div>
+                )}
+                <h3 className="text-xl font-bold text-center">{alumniData.alumniName}</h3>
+                <div className="text-sm space-y-1">
+                  <p><strong>Register No:</strong> {alumniData.regNo}</p>
+                  <p><strong>Email:</strong> {alumniData.alumniEmail}</p>
+                  <p><strong>UG:</strong> {alumniData.ug}</p>
+                  <p><strong>PG:</strong> {alumniData.pg}</p>
+                  <p><strong>Organisation:</strong> {alumniData.organisation}</p>
+                  <p><strong>Occupation:</strong> {alumniData.occupation}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
