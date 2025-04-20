@@ -50,8 +50,8 @@ const Home: React.FC = () => {
         <div className="feature-box">
           <h4 className="feature-title">☎️ Contact Support</h4>
           <p>Need help? Contact college administration.</p>
-          <Link href="/support">
-            <span className="feature-link">Get Support</span>
+          <Link href="/contact">
+            <span className="feature-link">Contact Us</span>
           </Link>
         </div>
       </section>
