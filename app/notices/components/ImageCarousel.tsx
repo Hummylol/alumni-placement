@@ -4,7 +4,10 @@ import React, { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 
 // Dynamically import Slider with no SSR
-const Slider = dynamic(() => import('react-slick'), { ssr: false });
+const Slider = dynamic(() => import('react-slick'), { 
+  ssr: false,
+  loading: () => <div className="carousel-loading">Loading carousel...</div>
+});
 
 // Import CSS only on client side
 const ImageCarousel: React.FC<{ images: string[] }> = ({ images }) => {
